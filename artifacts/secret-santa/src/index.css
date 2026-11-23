@@ -378,11 +378,20 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   .nav-links { gap:8px; }
   .nav-link { font-size:12px; }
   .nav-hide-mobile { display:none; }
+  .nav-login { white-space:nowrap; }
+  .nav-register { padding:8px 10px; gap:5px; font-size:11px; white-space:nowrap; }
   .nav-user { display:none; }
   .nav-button { min-height:40px; padding:8px 10px; border:1px solid hsl(var(--border)); border-radius:11px; background:hsl(var(--card) / .8); white-space:nowrap; }
   .mobile-nav { position:fixed; left:50%; bottom:0; z-index:20; box-sizing:border-box; display:flex; justify-content:space-around; gap:12px; width:min(100% - 28px, 540px); padding:11px 16px calc(11px + env(safe-area-inset-bottom)); border:1px solid hsl(var(--border)); border-bottom:0; border-radius:16px 16px 0 0; background:hsl(var(--background) / .96); box-shadow:0 -8px 28px hsl(33 26% 40% / .1); transform:translateX(-50%); backdrop-filter:blur(14px); }
   .mobile-nav .nav-link { flex:1; padding:10px 8px; border-radius:10px; text-align:center; }
   .app-shell:has(.mobile-nav) { padding-bottom:78px; }
+}
+@media (max-width:360px) {
+  .brand { gap:6px; font-size:15px; }
+  .brand-mark { width:30px; height:30px; }
+  .nav-links { gap:6px; }
+  .nav-login { font-size:11px; }
+  .nav-register { padding:8px; }
 }
 
 /**

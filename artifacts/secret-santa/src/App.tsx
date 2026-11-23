@@ -65,8 +65,8 @@ function TopNav() {
           </>
         ) : (
           <>
-            <Link href="/login" className="nav-link nav-hide-mobile" data-testid="link-login">Zaloguj się</Link>
-            <Link href="/register" className="button button-primary" style={{ padding: '10px 14px' }} data-testid="link-register">Załóż konto <ArrowRight size={14} /></Link>
+            <Link href="/login" className="nav-link nav-login" data-testid="link-login">Zaloguj się</Link>
+            <Link href="/register" className="button button-primary nav-register" data-testid="link-register">Załóż konto <ArrowRight size={14} /></Link>
           </>
         )}
       </nav>
