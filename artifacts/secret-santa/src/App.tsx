@@ -23,6 +23,20 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } },
 });
 
+const WISHLIST_ITEM_COUNT = 6;
+
+function wishlistItemsFromText(text: string): string[] {
+  const lines = text.split(/\r?\n/);
+  const items = lines.slice(0, WISHLIST_ITEM_COUNT);
+  if (lines.length > WISHLIST_ITEM_COUNT) {
+    items[WISHLIST_ITEM_COUNT - 1] = [
+      items[WISHLIST_ITEM_COUNT - 1],
+      ...lines.slice(WISHLIST_ITEM_COUNT),
+    ].join('\n');
+  }
+  return Array.from({ length: WISHLIST_ITEM_COUNT }, (_, index) => items[index] ?? '');
+}
+
 function errorCopy() {
   return 'Coś poszło nie tak. Spróbuj ponownie za chwilę.';
 }
@@ -264,7 +278,7 @@ function LoginPage() {
     <div className="kicker">Witamy z powrotem</div>
     <h2 className="heading" style={{ fontSize: 32, margin: '8px 0 24px' }}>Zaloguj się</h2>
     <form onSubmit={submit} style={{ display: 'grid', gap: 18 }}>
-      <div><label className="label" htmlFor="username">Nazwa użytkownika</label><input id="username" className="input" autoComplete="username" value={username} onChange={e => setUsername(e.target.value)} required data-testid="input-username" /></div>
+      <div><label className="label" htmlFor="username">Imię</label><input id="username" className="input" autoComplete="username" value={username} onChange={e => setUsername(e.target.value)} required data-testid="input-username" /></div>
       <div><label className="label" htmlFor="password">Hasło</label><input id="password" className="input" type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} required data-testid="input-password" /></div>
       {error && <div className="error-box" role="alert">{error}</div>}
       <button className="button button-primary" disabled={login.isPending} type="submit" data-testid="button-login">
@@ -302,7 +316,7 @@ function RegisterPage() {
     <div className="kicker">Własne miejsce w kręgu</div>
     <h2 className="heading" style={{ fontSize: 32, margin: '8px 0 24px' }}>Załóż konto</h2>
     <form onSubmit={submit} style={{ display: 'grid', gap: 18 }}>
-      <div><label className="label" htmlFor="new-username">Nazwa użytkownika</label><input id="new-username" className="input" autoComplete="username" minLength={3} maxLength={24} pattern="[A-Za-z0-9_.-]+" value={username} onChange={e => setUsername(e.target.value)} required data-testid="input-register-username" /><small style={{ display: 'block', color: 'hsl(var(--muted-foreground))', marginTop: 6, fontSize: 11 }}>3–24 znaki: litery, cyfry, kropka, myślnik lub podkreślenie.</small></div>
+      <div><label className="label" htmlFor="new-username">Imię</label><input id="new-username" className="input" autoComplete="username" minLength={3} maxLength={24} pattern="[A-Za-z0-9_.-]+" value={username} onChange={e => setUsername(e.target.value)} required data-testid="input-register-username" /><small style={{ display: 'block', color: 'hsl(var(--muted-foreground))', marginTop: 6, fontSize: 11 }}>3–24 znaki: litery, cyfry, kropka, myślnik lub podkreślenie.</small></div>
       <div><label className="label" htmlFor="new-password">Hasło</label><input id="new-password" className="input" type="password" autoComplete="new-password" minLength={8} maxLength={128} value={password} onChange={e => setPassword(e.target.value)} required data-testid="input-register-password" /><small style={{ display: 'block', color: 'hsl(var(--muted-foreground))', marginTop: 6, fontSize: 11 }}>Co najmniej 8 znaków.</small></div>
       {error && <div className="error-box" role="alert">{error}</div>}
       <button className="button button-primary" disabled={register.isPending} type="submit" data-testid="button-register">{register.isPending ? 'Tworzenie konta…' : 'Utwórz konto'} <ArrowRight size={15} /></button>
@@ -393,7 +407,11 @@ function RoomPage() {
   const join = useJoinRoom();
   const save = useUpdateWishlist();
   const queryClient = useQueryClient();
-  const [wishlist, setWishlist] = useState('');
+  const [wishlistItems, setWishlistItems] = useState<string[]>(() => wishlistItemsFromText(''));
+  const wishlistText = wishlistItems
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .join('\n');
   const [savedMessage, setSavedMessage] = useState('');
   const initialized = useRef('');
   const { data: assignment, isLoading: assignmentLoading, isError: assignmentError } = useGetMyAssignment(code, {
@@ -402,7 +420,7 @@ function RoomPage() {
   useEffect(() => {
     if (room && initialized.current !== code) {
       initialized.current = code;
-      setWishlist(room.myWishlist || '');
+      setWishlistItems(wishlistItemsFromText(room.myWishlist || ''));
     }
   }, [room, code]);
   const refreshRoom = () => {
@@ -413,7 +431,7 @@ function RoomPage() {
   const onJoin = () => join.mutate({ roomCode: code }, { onSuccess: refreshRoom });
   const onSave = (event: FormEvent) => {
     event.preventDefault(); setSavedMessage('');
-    save.mutate({ roomCode: code, data: { text: wishlist } }, {
+    save.mutate({ roomCode: code, data: { text: wishlistText } }, {
       onSuccess: () => { setSavedMessage('Lista życzeń została zapisana.'); refreshRoom(); },
       onError: () => setSavedMessage('Nie udało się zapisać listy. Spróbuj ponownie.'),
     });
@@ -422,6 +440,9 @@ function RoomPage() {
   if (isError && isUnauthorized(error)) return <SignedOut action="otworzyć tę wymianę" returnTo={`/room/${encodeURIComponent(code)}`} />;
   if (isError || !room) return <PageFrame><ErrorState retry={() => void refetch()} /></PageFrame>;
   const drawn = room.room.status === 'drawn';
+  const assignmentWishlistItems = assignment?.wishlist.text
+    .split(/\r?\n/)
+    .filter(item => item.trim()) ?? [];
   return <PageFrame>
     <div style={{ padding: '39px 0 22px' }}>
       <Link href={session?.user ? '/profile' : '/'} className="nav-link" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }} data-testid="link-back"><ArrowLeft size={14} /> Wróć</Link>
@@ -442,22 +463,32 @@ function RoomPage() {
           <div className="reveal-stamp"><Sparkles size={18} /></div><div className="kicker">Twoja tajemnica</div>
           <h2 className="heading" style={{ fontSize: 27, margin: '8px 0 5px' }}>Podarujesz prezent dla…</h2>
           {assignmentLoading ? <div className="skeleton" style={{ height: 37, width: 190, marginTop: 15 }} /> : assignment ?
-            <><p className="recipient-name">{assignment.recipient.username}</p><div className="recipient-wish"><div className="kicker" style={{ marginBottom: 8, fontSize: 13 }}>Lista życzeń tej osoby</div>{assignment.wishlist.text ? <p style={{ whiteSpace: 'pre-wrap', margin: 0, fontSize: 16, lineHeight: 1.7 }}>{assignment.wishlist.text}</p> : <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: 14 }}>Ta osoba jeszcze nie dodała listy życzeń.</span>}</div></> :
+            <><p className="recipient-name">{assignment.recipient.username}</p><div className="recipient-wish"><div className="kicker" style={{ marginBottom: 8, fontSize: 13 }}>Lista życzeń tej osoby</div>{assignmentWishlistItems.length ? <div style={{ fontSize: 16, lineHeight: 1.7 }}>{assignmentWishlistItems.map((item, index) => <p key={index} style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{item}</p>)}</div> : <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: 14 }}>Ta osoba jeszcze nie dodała listy życzeń.</span>}</div></> :
             <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 13 }}>{assignmentError ? 'Nie udało się wczytać Twojego przydziału. Odśwież stronę, aby spróbować ponownie.' : 'Przydział pojawi się tutaj po losowaniu.'}</p>}
           <p style={{ margin: '15px 0 0', color: 'hsl(var(--muted-foreground))', fontSize: 11 }}>To jedyny przydział widoczny na Twoim koncie.</p>
         </section>}
         {room.isMember && <section className="panel" style={{ padding: '25px 27px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 15, alignItems: 'start' }}>
             <div><div className="kicker">Tylko dla Ciebie</div><h2 className="heading" style={{ fontSize: 27, margin: '7px 0' }}>Twoja lista życzeń</h2></div>
-            <span className="wish-count">{wishlist.length}/3000</span>
+            <span className="wish-count">{wishlistText.length}/3000</span>
           </div>
-          <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 12, lineHeight: 1.65, margin: '0 0 18px' }}>Podpowiedz Mikołajowi, co sprawi Ci radość. Możesz edytować listę także po losowaniu.</p>
+          <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 12, lineHeight: 1.65, margin: '0 0 18px' }}>Wpisz maksymalnie sześć pomysłów na prezenty. Możesz edytować listę także po losowaniu.</p>
           <form onSubmit={onSave}>
-            <label className="sr-only" htmlFor="wishlist-text">Lista życzeń</label>
-            <textarea id="wishlist-text" className="textarea" maxLength={3000} value={wishlist} onChange={e => setWishlist(e.target.value)} placeholder={'Co lubisz? Jaki kolor nosisz? Może książka, herbata albo wspólne wyjście…'} data-testid="textarea-wishlist" />
+            <div style={{ display: 'grid', gap: 12 }}>
+              {wishlistItems.map((item, index) => {
+                const inputId = `wishlist-item-${index + 1}`;
+                return <div key={inputId}>
+                  <label className="label" htmlFor={inputId}>Pomysł na prezent {index + 1}</label>
+                  <input id={inputId} className="input" maxLength={3000} value={item} onChange={event => {
+                    const value = event.currentTarget.value;
+                    setWishlistItems(current => current.map((currentItem, itemIndex) => itemIndex === index ? value : currentItem));
+                  }} placeholder={['np. książka', 'np. herbata', 'np. ciepłe skarpety', 'np. gra planszowa', 'np. roślina', 'np. wspólne wyjście'][index]} data-testid={`input-wishlist-item-${index + 1}`} />
+                </div>;
+              })}
+            </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 14 }}>
               <span aria-live="polite" style={{ color: savedMessage.includes('Nie udało') ? 'hsl(var(--destructive))' : 'hsl(var(--muted-foreground))', fontSize: 11 }}>{savedMessage}</span>
-              <button type="submit" className="button button-primary" disabled={save.isPending || wishlist.length > 3000} data-testid="button-save-wishlist">{save.isPending ? 'Zapisywanie…' : 'Zapisz listę'} {savedMessage.startsWith('Lista') ? <Check size={15} /> : <ArrowRight size={15} />}</button>
+              <button type="submit" className="button button-primary" disabled={save.isPending || wishlistText.length > 3000} data-testid="button-save-wishlist">{save.isPending ? 'Zapisywanie…' : 'Zapisz listę'} {savedMessage.startsWith('Lista') ? <Check size={15} /> : <ArrowRight size={15} />}</button>
             </div>
           </form>
         </section>}
