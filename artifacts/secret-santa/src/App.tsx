@@ -587,9 +587,9 @@ function AdminRoomCard({ room }: { room: { code: string; name: string; status: s
       <div><span className="kicker">Listy życzeń</span><strong>{room.wishlistCount}<small> / {room.memberCount}</small></strong></div>
       <div className="completion"><div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, marginBottom: 7 }}><span>Gotowość</span><strong>{completion}%</strong></div><div className="progress-track"><span style={{ width: `${completion}%` }} /></div></div>
       <div className="admin-actions">{done ?
-        <button className="button button-danger" disabled={reset.isPending || removeRoom.isPending} onClick={onReset} data-testid={`button-reset-${room.code}`}><RefreshCw size={14} /> {reset.isPending ? 'Resetowanie…' : 'Zresetuj losowanie'}</button> :
-        <button className="button button-primary" disabled={draw.isPending || removeRoom.isPending || room.memberCount < 2} onClick={onDraw} data-testid={`button-draw-${room.code}`} title={room.memberCount < 2 ? 'Potrzeba co najmniej dwóch uczestników.' : ''}><Sparkles size={14} /> {draw.isPending ? 'Losowanie…' : 'Rozpocznij losowanie'}</button>}
-        <button className="button button-danger" disabled={removeRoom.isPending || draw.isPending || reset.isPending} onClick={onDeleteRoom} data-testid={`button-delete-room-${room.code}`}><Trash2 size={14} /> {removeRoom.isPending ? 'Usuwanie…' : 'Usuń wymianę'}</button>
+        <button className="button button-danger" disabled={reset.isPending || removeRoom.isPending || removeMember.isPending} onClick={onReset} data-testid={`button-reset-${room.code}`}><RefreshCw size={14} /> {reset.isPending ? 'Resetowanie…' : 'Zresetuj losowanie'}</button> :
+        <button className="button button-primary" disabled={draw.isPending || removeRoom.isPending || removeMember.isPending || room.memberCount < 2} onClick={onDraw} data-testid={`button-draw-${room.code}`} title={room.memberCount < 2 ? 'Potrzeba co najmniej dwóch uczestników.' : ''}><Sparkles size={14} /> {draw.isPending ? 'Losowanie…' : 'Rozpocznij losowanie'}</button>}
+        <button className="button button-danger" disabled={removeRoom.isPending || removeMember.isPending || draw.isPending || reset.isPending} onClick={onDeleteRoom} data-testid={`button-delete-room-${room.code}`}><Trash2 size={14} /> {removeRoom.isPending ? 'Usuwanie…' : 'Usuń wymianę'}</button>
       </div>
     </div>
     {notice && <div className="error-box" style={{ marginTop: 13 }}>{notice}</div>}
