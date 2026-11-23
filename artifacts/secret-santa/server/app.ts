@@ -1,4 +1,5 @@
 import express, { type ErrorRequestHandler } from "express";
+import path from "node:path";
 import pinoHttp from "pino-http";
 import { GetHealthResponse } from "@workspace/api-zod";
 import { logger } from "./lib/logger.js";
@@ -35,6 +36,19 @@ app.use("/api", authRoutes);
 app.use("/api", profileRoutes);
 app.use("/api", adminRoutes);
 app.use("/api", roomRoutes);
+app.use("/api", (_req, res) => {
+  res.status(404).json({ error: "Nie znaleziono endpointu." });
+});
+
+const publicDir = path.resolve(process.cwd(), "dist/public");
+app.use(express.static(publicDir));
+app.get("/{*path}", (req, res, next) => {
+  if (!req.accepts("html")) {
+    next();
+    return;
+  }
+  res.sendFile(path.join(publicDir, "index.html"));
+});
 
 const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
   logger.error({ err: error }, "API request failed");

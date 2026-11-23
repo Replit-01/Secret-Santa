@@ -7,7 +7,9 @@
     "dev": "vite --config vite.config.ts --host 0.0.0.0",
     "api": "tsx watch server/index.ts",
     "build": "vite build --config vite.config.ts",
-    "build:api": "esbuild server/index.ts --bundle --platform=node --format=esm --packages=external --sourcemap --outfile=server-dist/index.mjs",
+    "build:api": "esbuild server/index.ts --bundle --platform=node --format=esm --external:better-sqlite3 --external:express --external:pino --external:pino-http --sourcemap --outfile=server-dist/index.mjs",
+    "build:render": "PORT=10000 BASE_PATH=/ pnpm run build && pnpm run build:api",
+    "start": "node server-dist/index.mjs",
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.server.json --noEmit"
   },

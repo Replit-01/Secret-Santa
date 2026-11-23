@@ -79,11 +79,24 @@ db.exec(`
 db.prepare("DELETE FROM sessions WHERE expires_at <= ?").run(Date.now());
 
 const adminExists = db
-  .prepare("SELECT id FROM users WHERE username = ? COLLATE NOCASE")
-  .get("admin");
+  .prepare("SELECT id FROM users WHERE is_admin = 1 LIMIT 1")
+  .get();
 
 if (!adminExists) {
+  const adminUsername =
+    process.env.ADMIN_USERNAME ??
+    (process.env.NODE_ENV === "production" ? undefined : "admin");
+  const adminPassword =
+    process.env.ADMIN_PASSWORD ??
+    (process.env.NODE_ENV === "production" ? undefined : "admin");
+
+  if (!adminUsername || !adminPassword) {
+    throw new Error(
+      "ADMIN_USERNAME and ADMIN_PASSWORD are required to create the initial admin account.",
+    );
+  }
+
   db.prepare(
     "INSERT INTO users (username, password_hash, is_admin, created_at) VALUES (?, ?, 1, ?)",
-  ).run("admin", hashPassword("admin"), new Date().toISOString());
+  ).run(adminUsername, hashPassword(adminPassword), new Date().toISOString());
 }
