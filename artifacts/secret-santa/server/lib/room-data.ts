@@ -87,6 +87,40 @@ export function listAdminRooms(): RoomSummary[] {
   return rows.map(publicRoom);
 }
 
+export type DeleteRoomResult = { kind: "ok" } | { kind: "not-found" };
+
+export function deleteRoom(code: string): DeleteRoomResult {
+  const result = db
+    .prepare("DELETE FROM rooms WHERE code = ? COLLATE NOCASE")
+    .run(code);
+  return result.changes > 0 ? { kind: "ok" } : { kind: "not-found" };
+}
+
+export type DeleteRoomMemberResult =
+  | { kind: "ok" }
+  | { kind: "not-found" }
+  | { kind: "not-member" }
+  | { kind: "already-drawn" };
+
+export function deleteRoomMember(
+  code: string,
+  userId: number,
+): DeleteRoomMemberResult {
+  const remove = db.transaction((): DeleteRoomMemberResult => {
+    const record = findRoom(code);
+    if (!record) return { kind: "not-found" };
+    if (record.status === "drawn") return { kind: "already-drawn" };
+    if (!memberExists(record.id, userId)) return { kind: "not-member" };
+
+    db.prepare("DELETE FROM room_members WHERE room_id = ? AND user_id = ?").run(
+      record.id,
+      userId,
+    );
+    return { kind: "ok" };
+  });
+  return remove.immediate();
+}
+
 export function createRoom(name: string, creatorId: number): RoomSummary {
   const createdAt = new Date().toISOString();
   for (let attempt = 0; attempt < 100; attempt += 1) {

@@ -142,6 +142,68 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/RoomSummary"
+  /admin/rooms/{roomCode}:
+    delete:
+      operationId: deleteRoom
+      tags: [admin]
+      summary: Delete an exchange and its data
+      parameters:
+        - name: roomCode
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^[A-HJ-NP-Z2-9]{6}$"
+      responses:
+        "200":
+          description: Exchange deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        "404":
+          description: Room not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/rooms/{roomCode}/members/{userId}:
+    delete:
+      operationId: deleteRoomMember
+      tags: [admin]
+      summary: Remove a participant before the draw
+      parameters:
+        - name: roomCode
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^[A-HJ-NP-Z2-9]{6}$"
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Participant removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        "404":
+          description: Room or participant not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Participants cannot be removed after the draw
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /rooms/{roomCode}:
     get:
       operationId: getRoom

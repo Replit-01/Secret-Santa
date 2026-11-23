@@ -2,6 +2,8 @@ import { Router } from "express";
 import {
   CreateRoomBody,
   CreateRoomResponse,
+  DeleteRoomMemberParams,
+  DeleteRoomParams,
   DrawRoomParams,
   DrawRoomResponse,
   ListAdminRoomsResponse,
@@ -15,6 +17,8 @@ import {
 } from "../lib/auth.js";
 import {
   createRoom,
+  deleteRoom,
+  deleteRoomMember,
   drawRoom,
   listAdminRooms,
   resetRoomDraw,
@@ -35,6 +39,49 @@ router.post("/admin/rooms", (req, res) => {
   }
   const room = createRoom(parsed.data.name, authenticatedUser(req).id);
   res.status(201).json(CreateRoomResponse.parse(room));
+});
+
+router.delete("/admin/rooms/:roomCode", (req, res) => {
+  const parsed = DeleteRoomParams.safeParse({
+    roomCode: String(req.params.roomCode ?? "").toUpperCase(),
+  });
+  if (!parsed.success) {
+    res.status(400).json({ error: "Nieprawidłowy kod pokoju." });
+    return;
+  }
+
+  const result = deleteRoom(parsed.data.roomCode);
+  if (result.kind === "not-found") {
+    res.status(404).json({ error: "Nie znaleziono pokoju." });
+    return;
+  }
+  res.json({ ok: true });
+});
+
+router.delete("/admin/rooms/:roomCode/members/:userId", (req, res) => {
+  const parsed = DeleteRoomMemberParams.safeParse({
+    roomCode: String(req.params.roomCode ?? "").toUpperCase(),
+    userId: req.params.userId,
+  });
+  if (!parsed.success) {
+    res.status(400).json({ error: "Nieprawidłowy pokój lub uczestnik." });
+    return;
+  }
+
+  const result = deleteRoomMember(parsed.data.roomCode, parsed.data.userId);
+  if (result.kind === "not-found") {
+    res.status(404).json({ error: "Nie znaleziono pokoju." });
+    return;
+  }
+  if (result.kind === "not-member") {
+    res.status(404).json({ error: "Użytkownik nie należy do tej wymiany." });
+    return;
+  }
+  if (result.kind === "already-drawn") {
+    res.status(409).json({ error: "Nie można usunąć uczestnika po losowaniu." });
+    return;
+  }
+  res.json({ ok: true });
 });
 
 router.post("/rooms/:roomCode/draw", requireAuth, requireAdmin, (req, res) => {
