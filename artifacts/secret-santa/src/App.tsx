@@ -438,6 +438,14 @@ function RoomPage() {
           <button className="button button-primary" onClick={onJoin} disabled={join.isPending || drawn} data-testid="button-join-room">{join.isPending ? 'Dołączanie…' : 'Dołączam'} <ArrowRight size={15} /></button>
           {drawn && <small>Losowanie już się odbyło — zapisy do tej wymiany są zamknięte.</small>}
         </section>}
+        {room.isMember && drawn && <section className="gift-reveal">
+          <div className="reveal-stamp"><Sparkles size={18} /></div><div className="kicker">Twoja tajemnica</div>
+          <h2 className="heading" style={{ fontSize: 27, margin: '8px 0 5px' }}>Podarujesz prezent dla…</h2>
+          {assignmentLoading ? <div className="skeleton" style={{ height: 37, width: 190, marginTop: 15 }} /> : assignment ?
+            <><p className="recipient-name">{assignment.recipient.username}</p><div className="recipient-wish"><div className="kicker" style={{ marginBottom: 8, fontSize: 13 }}>Lista życzeń tej osoby</div>{assignment.wishlist.text ? <p style={{ whiteSpace: 'pre-wrap', margin: 0, fontSize: 16, lineHeight: 1.7 }}>{assignment.wishlist.text}</p> : <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: 14 }}>Ta osoba jeszcze nie dodała listy życzeń.</span>}</div></> :
+            <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 13 }}>{assignmentError ? 'Nie udało się wczytać Twojego przydziału. Odśwież stronę, aby spróbować ponownie.' : 'Przydział pojawi się tutaj po losowaniu.'}</p>}
+          <p style={{ margin: '15px 0 0', color: 'hsl(var(--muted-foreground))', fontSize: 11 }}>To jedyny przydział widoczny na Twoim koncie.</p>
+        </section>}
         {room.isMember && <section className="panel" style={{ padding: '25px 27px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 15, alignItems: 'start' }}>
             <div><div className="kicker">Tylko dla Ciebie</div><h2 className="heading" style={{ fontSize: 27, margin: '7px 0' }}>Twoja lista życzeń</h2></div>
@@ -452,14 +460,6 @@ function RoomPage() {
               <button type="submit" className="button button-primary" disabled={save.isPending || wishlist.length > 3000} data-testid="button-save-wishlist">{save.isPending ? 'Zapisywanie…' : 'Zapisz listę'} {savedMessage.startsWith('Lista') ? <Check size={15} /> : <ArrowRight size={15} />}</button>
             </div>
           </form>
-        </section>}
-        {room.isMember && drawn && <section className="gift-reveal">
-          <div className="reveal-stamp"><Sparkles size={18} /></div><div className="kicker">Twoja tajemnica</div>
-          <h2 className="heading" style={{ fontSize: 27, margin: '8px 0 5px' }}>Podarujesz prezent dla…</h2>
-          {assignmentLoading ? <div className="skeleton" style={{ height: 37, width: 190, marginTop: 15 }} /> : assignment ?
-            <><p className="recipient-name">{assignment.recipient.username}</p><div className="recipient-wish"><div className="kicker" style={{ marginBottom: 8 }}>Lista życzeń tej osoby</div>{assignment.wishlist.text ? <p style={{ whiteSpace: 'pre-wrap', margin: 0, lineHeight: 1.7 }}>{assignment.wishlist.text}</p> : <span style={{ color: 'hsl(var(--muted-foreground))' }}>Ta osoba jeszcze nie dodała listy życzeń.</span>}</div></> :
-            <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 13 }}>{assignmentError ? 'Nie udało się wczytać Twojego przydziału. Odśwież stronę, aby spróbować ponownie.' : 'Przydział pojawi się tutaj po losowaniu.'}</p>}
-          <p style={{ margin: '15px 0 0', color: 'hsl(var(--muted-foreground))', fontSize: 11 }}>To jedyny przydział widoczny na Twoim koncie.</p>
         </section>}
       </div>
       <aside className="panel participant-panel">
