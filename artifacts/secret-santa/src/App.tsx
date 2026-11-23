@@ -36,16 +36,15 @@ function PageFrame({ children, className = '' }: { children: ReactNode; classNam
 }
 
 function TopNav() {
-  const [location, setLocation] = useLocation();
+  const [location] = useLocation();
   const { data: session } = useGetCurrentUser();
   const logout = useLogoutUser();
   const queryClient = useQueryClient();
   const user = session?.user;
   const onLogout = () => logout.mutate(undefined, {
     onSuccess: () => {
-      queryClient.setQueryData(getGetCurrentUserQueryKey(), undefined);
-      void queryClient.invalidateQueries({ queryKey: getGetCurrentUserQueryKey() });
-      setLocation('/');
+      queryClient.clear();
+      window.location.replace('/');
     },
   });
   return (
@@ -59,9 +58,9 @@ function TopNav() {
           <>
             <Link href="/profile" className={`nav-link nav-hide-mobile ${location === '/profile' ? 'active' : ''}`} data-testid="link-profile">Moje wymiany</Link>
             {user.isAdmin && <Link href="/admin" className={`nav-link nav-hide-mobile ${location === '/admin' ? 'active' : ''}`} data-testid="link-admin">Panel organizatora</Link>}
-            <span className="nav-link" style={{ color: 'hsl(var(--foreground))' }}>{user.username}</span>
-            <button className="nav-button nav-hide-mobile" onClick={onLogout} disabled={logout.isPending} data-testid="button-logout">
-              <LogOut size={15} style={{ verticalAlign: 'middle', marginRight: 5 }} /> Wyloguj
+            <span className="nav-link nav-user" style={{ color: 'hsl(var(--foreground))' }}>{user.username}</span>
+            <button className="nav-button" onClick={onLogout} disabled={logout.isPending} data-testid="button-logout">
+              Wyloguj <LogOut size={15} />
             </button>
           </>
         ) : (
