@@ -1,0 +1,1 @@
+{"version":3,"file":"roomDetail.d.ts","sourceRoot":"","sources":["../../../src/generated/types/roomDetail.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AACH,OAAO,KAAK,EAAE,UAAU,EAAE,MAAM,cAAc,CAAC;AAC/C,OAAO,KAAK,EAAE,WAAW,EAAE,MAAM,eAAe,CAAC;AAEjD,MAAM,WAAW,UAAU;IACzB,IAAI,EAAE,WAAW,CAAC;IAClB,OAAO,EAAE,UAAU,EAAE,CAAC;IACtB,QAAQ,EAAE,OAAO,CAAC;IAClB,UAAU,EAAE,MAAM,CAAC;CACpB"}
