@@ -145,6 +145,68 @@ export const CreateRoomResponse = zod.object({
 
 
 /**
+ * @summary Delete an exchange and its data
+ */
+export const deleteRoomPathRoomCodeRegExp = new RegExp('^[A-HJ-NP-Z2-9]{6}$');
+
+
+export const DeleteRoomParams = zod.object({
+  "roomCode": zod.coerce.string().regex(deleteRoomPathRoomCodeRegExp)
+})
+
+export const DeleteRoomResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
+ * @summary Remove a participant before the draw
+ */
+export const deleteRoomMemberPathRoomCodeRegExp = new RegExp('^[A-HJ-NP-Z2-9]{6}$');
+
+
+export const DeleteRoomMemberParams = zod.object({
+  "roomCode": zod.coerce.string().regex(deleteRoomMemberPathRoomCodeRegExp),
+  "userId": zod.coerce.number().int().positive()
+})
+
+export const DeleteRoomMemberResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
+ * @summary Delete an exchange and its data
+ */
+export const deleteRoomPathRoomCodeRegExp = new RegExp('^[A-HJ-NP-Z2-9]{6}$');
+
+
+export const DeleteRoomParams = zod.object({
+  "roomCode": zod.coerce.string().regex(deleteRoomPathRoomCodeRegExp)
+})
+
+export const DeleteRoomResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
+ * @summary Remove a participant before the draw
+ */
+export const deleteRoomMemberPathRoomCodeRegExp = new RegExp('^[A-HJ-NP-Z2-9]{6}$');
+
+
+export const DeleteRoomMemberParams = zod.object({
+  "roomCode": zod.coerce.string().regex(deleteRoomMemberPathRoomCodeRegExp),
+  "userId": zod.coerce.number().int().positive()
+})
+
+export const DeleteRoomMemberResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
  * @summary Get a room and its participant list
  */
 export const getRoomPathRoomCodeRegExp = new RegExp('^[A-HJ-NP-Z2-9]{6}$');

@@ -780,6 +780,119 @@ export const useCreateRoom = <TError = ErrorType<unknown>,
       return useMutation(getCreateRoomMutationOptions(options), queryClient);
     }
 
+export const getDeleteRoomUrl = (roomCode: string) => `/api/admin/rooms/${roomCode}`;
+
+export const deleteRoom = async (
+  roomCode: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<OkResponse> =>
+  customFetch<OkResponse>(getDeleteRoomUrl(roomCode), {
+    ...options,
+    method: 'DELETE',
+  });
+
+export type DeleteRoomMutationVariables = { roomCode: string };
+
+export const useDeleteRoom = <TError = ErrorType<ErrorResponse>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<OkResponse, TError, DeleteRoomMutationVariables, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<OkResponse, TError, DeleteRoomMutationVariables, TContext> => {
+  const { mutation, request } = options ?? {};
+  return useMutation({
+    mutationFn: ({ roomCode }) => deleteRoom(roomCode, request),
+    ...mutation,
+  }, queryClient);
+};
+
+export const getDeleteRoomMemberUrl = (roomCode: string, userId: number) =>
+  `/api/admin/rooms/${roomCode}/members/${userId}`;
+
+export const deleteRoomMember = async (
+  roomCode: string,
+  userId: number,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<OkResponse> =>
+  customFetch<OkResponse>(getDeleteRoomMemberUrl(roomCode, userId), {
+    ...options,
+    method: 'DELETE',
+  });
+
+export type DeleteRoomMemberMutationVariables = { roomCode: string; userId: number };
+
+export const useDeleteRoomMember = <TError = ErrorType<ErrorResponse>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<OkResponse, TError, DeleteRoomMemberMutationVariables, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<OkResponse, TError, DeleteRoomMemberMutationVariables, TContext> => {
+  const { mutation, request } = options ?? {};
+  return useMutation({
+    mutationFn: ({ roomCode, userId }) => deleteRoomMember(roomCode, userId, request),
+    ...mutation,
+  }, queryClient);
+};
+
+export const getDeleteRoomUrl = (roomCode: string) =>
+  `/api/admin/rooms/${roomCode}`;
+
+export const deleteRoom = async (
+  roomCode: string,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<OkResponse> =>
+  customFetch<OkResponse>(getDeleteRoomUrl(roomCode), {
+    ...options,
+    method: 'DELETE',
+  });
+
+export type DeleteRoomMutationVariables = { roomCode: string };
+
+export const useDeleteRoom = <TError = ErrorType<ErrorResponse>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<OkResponse, TError, DeleteRoomMutationVariables, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<OkResponse, TError, DeleteRoomMutationVariables, TContext> => {
+  const { mutation, request } = options ?? {};
+  return useMutation({
+    mutationFn: ({ roomCode }) => deleteRoom(roomCode, request),
+    ...mutation,
+  }, queryClient);
+};
+
+export const getDeleteRoomMemberUrl = (roomCode: string, userId: number) =>
+  `/api/admin/rooms/${roomCode}/members/${userId}`;
+
+export const deleteRoomMember = async (
+  roomCode: string,
+  userId: number,
+  options?: Parameters<typeof customFetch>[1],
+): Promise<OkResponse> =>
+  customFetch<OkResponse>(getDeleteRoomMemberUrl(roomCode, userId), {
+    ...options,
+    method: 'DELETE',
+  });
+
+export type DeleteRoomMemberMutationVariables = { roomCode: string; userId: number };
+
+export const useDeleteRoomMember = <TError = ErrorType<ErrorResponse>, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<OkResponse, TError, DeleteRoomMemberMutationVariables, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<OkResponse, TError, DeleteRoomMemberMutationVariables, TContext> => {
+  const { mutation, request } = options ?? {};
+  return useMutation({
+    mutationFn: ({ roomCode, userId }) => deleteRoomMember(roomCode, userId, request),
+    ...mutation,
+  }, queryClient);
+};
+
 export const getGetRoomUrl = (roomCode: string,) => {
 
 

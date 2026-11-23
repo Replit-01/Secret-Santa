@@ -3,7 +3,9 @@ import {
   CreateRoomBody,
   CreateRoomResponse,
   DeleteRoomMemberParams,
+  DeleteRoomMemberResponse,
   DeleteRoomParams,
+  DeleteRoomResponse,
   DrawRoomParams,
   DrawRoomResponse,
   ListAdminRoomsResponse,
@@ -55,7 +57,7 @@ router.delete("/admin/rooms/:roomCode", (req, res) => {
     res.status(404).json({ error: "Nie znaleziono pokoju." });
     return;
   }
-  res.json({ ok: true });
+  res.json(DeleteRoomResponse.parse({ ok: true }));
 });
 
 router.delete("/admin/rooms/:roomCode/members/:userId", (req, res) => {
@@ -81,7 +83,7 @@ router.delete("/admin/rooms/:roomCode/members/:userId", (req, res) => {
     res.status(409).json({ error: "Nie można usunąć uczestnika po losowaniu." });
     return;
   }
-  res.json({ ok: true });
+  res.json(DeleteRoomMemberResponse.parse({ ok: true }));
 });
 
 router.post("/rooms/:roomCode/draw", requireAuth, requireAdmin, (req, res) => {

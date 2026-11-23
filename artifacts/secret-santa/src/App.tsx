@@ -5,11 +5,12 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import {
   ArrowLeft, ArrowRight, Check, CheckCircle2, Copy, Gift, KeyRound, LogIn,
-  LogOut, PartyPopper, RefreshCw, ShieldCheck, Sparkles, UserRound, Users,
+  LogOut, PartyPopper, RefreshCw, ShieldCheck, Sparkles, Trash2, UserRound, Users,
 } from 'lucide-react';
 import {
   getGetCurrentUserQueryKey, getGetHealthQueryKey, getGetMyAssignmentQueryKey, getGetProfileQueryKey,
-  getGetRoomQueryKey, getListAdminRoomsQueryKey, useCreateRoom, useDrawRoom,
+  getGetRoomQueryKey, getListAdminRoomsQueryKey, useCreateRoom, useDeleteRoom,
+  useDeleteRoomMember, useDrawRoom,
   useGetCurrentUser, useGetHealth, useGetMyAssignment, useGetProfile, useGetRoom,
   useJoinRoom, useListAdminRooms, useLoginUser, useLogoutUser, useRegisterUser,
   useResetRoomDraw, useUpdateWishlist,
@@ -537,6 +538,8 @@ function AdminRoomCard({ room }: { room: { code: string; name: string; status: s
   const { data: detail, isLoading, isError } = useGetRoom(room.code, { query: { queryKey: getGetRoomQueryKey(room.code) } });
   const draw = useDrawRoom();
   const reset = useResetRoomDraw();
+  const removeRoom = useDeleteRoom();
+  const removeMember = useDeleteRoomMember();
   const queryClient = useQueryClient();
   const [notice, setNotice] = useState('');
   const done = room.status === 'drawn';
@@ -544,12 +547,33 @@ function AdminRoomCard({ room }: { room: { code: string; name: string; status: s
   const refresh = () => {
     void queryClient.invalidateQueries({ queryKey: getListAdminRoomsQueryKey() });
     void queryClient.invalidateQueries({ queryKey: getGetRoomQueryKey(room.code) });
+    void queryClient.invalidateQueries({ queryKey: getGetProfileQueryKey() });
   };
   const onDraw = () => {
     if (window.confirm(`Rozpocząć losowanie dla „${room.name}”?`)) draw.mutate({ roomCode: room.code }, { onSuccess: refresh, onError: () => setNotice('Nie udało się przeprowadzić losowania. Sprawdź, czy wszyscy mogą wziąć udział.') });
   };
   const onReset = () => {
     if (window.confirm(`Unieważnić losowanie dla „${room.name}”? Uczestnicy i ich listy życzeń pozostaną bez zmian.`)) reset.mutate({ roomCode: room.code }, { onSuccess: refresh, onError: () => setNotice('Nie udało się zresetować losowania.') });
+  };
+  const onDeleteRoom = () => {
+    if (window.confirm(`Usunąć wymianę „${room.name}” wraz z uczestnikami, listami życzeń i losowaniem? Konta użytkowników pozostaną bez zmian.`)) {
+      removeRoom.mutate({ roomCode: room.code }, {
+        onSuccess: () => {
+          void queryClient.removeQueries({ queryKey: getGetRoomQueryKey(room.code) });
+          void queryClient.invalidateQueries({ queryKey: getListAdminRoomsQueryKey() });
+          void queryClient.invalidateQueries({ queryKey: getGetProfileQueryKey() });
+        },
+        onError: () => setNotice('Nie udało się usunąć wymiany.'),
+      });
+    }
+  };
+  const onDeleteMember = (userId: number, username: string) => {
+    if (window.confirm(`Usunąć ${username} z wymiany „${room.name}”? Lista życzeń tej osoby w tej wymianie zostanie usunięta.`)) {
+      removeMember.mutate({ roomCode: room.code, userId }, {
+        onSuccess: refresh,
+        onError: () => setNotice('Nie udało się usunąć uczestnika z wymiany.'),
+      });
+    }
   };
   return <article className="admin-room panel" data-testid={`admin-room-${room.code}`}>
     <div className="admin-room-top">
@@ -563,17 +587,18 @@ function AdminRoomCard({ room }: { room: { code: string; name: string; status: s
       <div><span className="kicker">Listy życzeń</span><strong>{room.wishlistCount}<small> / {room.memberCount}</small></strong></div>
       <div className="completion"><div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, marginBottom: 7 }}><span>Gotowość</span><strong>{completion}%</strong></div><div className="progress-track"><span style={{ width: `${completion}%` }} /></div></div>
       <div className="admin-actions">{done ?
-        <button className="button button-danger" disabled={reset.isPending} onClick={onReset} data-testid={`button-reset-${room.code}`}><RefreshCw size={14} /> {reset.isPending ? 'Resetowanie…' : 'Zresetuj losowanie'}</button> :
-        <button className="button button-primary" disabled={draw.isPending || room.memberCount < 2} onClick={onDraw} data-testid={`button-draw-${room.code}`} title={room.memberCount < 2 ? 'Potrzeba co najmniej dwóch uczestników.' : ''}><Sparkles size={14} /> {draw.isPending ? 'Losowanie…' : 'Rozpocznij losowanie'}</button>}
+        <button className="button button-danger" disabled={reset.isPending || removeRoom.isPending} onClick={onReset} data-testid={`button-reset-${room.code}`}><RefreshCw size={14} /> {reset.isPending ? 'Resetowanie…' : 'Zresetuj losowanie'}</button> :
+        <button className="button button-primary" disabled={draw.isPending || removeRoom.isPending || room.memberCount < 2} onClick={onDraw} data-testid={`button-draw-${room.code}`} title={room.memberCount < 2 ? 'Potrzeba co najmniej dwóch uczestników.' : ''}><Sparkles size={14} /> {draw.isPending ? 'Losowanie…' : 'Rozpocznij losowanie'}</button>}
+        <button className="button button-danger" disabled={removeRoom.isPending || draw.isPending || reset.isPending} onClick={onDeleteRoom} data-testid={`button-delete-room-${room.code}`}><Trash2 size={14} /> {removeRoom.isPending ? 'Usuwanie…' : 'Usuń wymianę'}</button>
       </div>
     </div>
     {notice && <div className="error-box" style={{ marginTop: 13 }}>{notice}</div>}
     <div className="participants-admin">
       <div className="participants-admin-title"><strong>Osoby w wymianie</strong><span>{isLoading ? 'Wczytywanie…' : isError ? 'Nie udało się wczytać uczestników' : `${detail?.members.length ?? 0} osób`}</span></div>
-      {detail?.members.length ? <div className="admin-members">{detail.members.map(member => <span className="admin-member-chip" key={member.id}><span className="member-avatar">{member.username.slice(0, 1).toUpperCase()}</span>{member.username}<span className={`wish-check ${member.hasWishlist ? 'has-wish' : ''}`}>{member.hasWishlist ? <Check size={12} /> : 'Lista do uzupełnienia'}</span></span>)}</div> : !isLoading && !isError ? <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 11, marginBottom: 0 }}>Oczekiwanie na pierwszych uczestników.</p> : null}
+      {detail?.members.length ? <div className="admin-members">{detail.members.map(member => <span className="admin-member-chip" key={member.id} data-testid={`admin-member-${room.code}-${member.id}`}><span className="member-avatar">{member.username.slice(0, 1).toUpperCase()}</span>{member.username}<span className={`wish-check ${member.hasWishlist ? 'has-wish' : ''}`}>{member.hasWishlist ? <Check size={12} /> : 'Lista do uzupełnienia'}</span>{!done && <button type="button" className="button button-quiet" style={{ padding: 4, minWidth: 24, minHeight: 24, borderRadius: '50%' }} aria-label={`Usuń ${member.username} z wymiany`} title={`Usuń ${member.username} z wymiany`} disabled={removeMember.isPending || removeRoom.isPending || draw.isPending} onClick={() => onDeleteMember(member.id, member.username)} data-testid={`button-delete-member-${room.code}-${member.id}`}><Trash2 size={12} /></button>}</span>)}</div> : !isLoading && !isError ? <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: 11, marginBottom: 0 }}>Oczekiwanie na pierwszych uczestników.</p> : null}
     </div>
     <style>{`
-      .admin-room{padding:21px 24px}.admin-room-top{display:flex;justify-content:space-between;align-items:center;gap:16px}.admin-metrics{display:grid;grid-template-columns:.8fr .9fr 1.2fr auto;gap:20px;align-items:center;margin:20px 0;padding:17px 0;border-top:1px solid hsl(var(--border));border-bottom:1px solid hsl(var(--border))}.admin-metrics>div:not(.completion):not(.admin-actions){display:grid;gap:5px}.admin-metrics strong{font-size:19px;color:hsl(var(--foreground))}.admin-metrics strong small{font-size:11px;color:hsl(var(--muted-foreground));font-weight:500}.completion{min-width:100px;color:hsl(var(--muted-foreground))}.progress-track{height:6px;background:hsl(var(--muted));border-radius:6px;overflow:hidden}.progress-track span{height:100%;display:block;border-radius:6px;background:hsl(var(--primary));transition:width .35s ease}.admin-actions .button{font-size:11px;padding:10px 12px;white-space:nowrap}.participants-admin-title{display:flex;justify-content:space-between;gap:12px;font-size:11px}.participants-admin-title span{color:hsl(var(--muted-foreground))}.admin-members{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}.admin-member-chip{display:flex;align-items:center;gap:7px;padding:5px 8px 5px 5px;border:1px solid hsl(var(--border));border-radius:999px;background:hsl(var(--background));font-size:10px}.admin-member-chip .member-avatar{width:24px;height:24px;border-radius:50%;font-size:10px}.wish-check{font-size:9px;color:hsl(var(--muted-foreground));padding-left:4px}.wish-check.has-wish{color:hsl(var(--primary));display:grid;place-items:center}.admin-room .error-box{font-size:11px}@media(max-width:760px){.admin-metrics{grid-template-columns:1fr 1fr;gap:15px}.admin-actions{grid-column:1/-1}.admin-actions .button{width:100%}.admin-room{padding:17px}.admin-room-top{align-items:flex-start}.admin-room-top>.status-pill{font-size:9px}}`}</style>
+      .admin-room{padding:21px 24px}.admin-room-top{display:flex;justify-content:space-between;align-items:center;gap:16px}.admin-metrics{display:grid;grid-template-columns:.8fr .9fr 1.2fr auto;gap:20px;align-items:center;margin:20px 0;padding:17px 0;border-top:1px solid hsl(var(--border));border-bottom:1px solid hsl(var(--border))}.admin-metrics>div:not(.completion):not(.admin-actions){display:grid;gap:5px}.admin-metrics strong{font-size:19px;color:hsl(var(--foreground))}.admin-metrics strong small{font-size:11px;color:hsl(var(--muted-foreground));font-weight:500}.completion{min-width:100px;color:hsl(var(--muted-foreground))}.progress-track{height:6px;background:hsl(var(--muted));border-radius:6px;overflow:hidden}.progress-track span{height:100%;display:block;border-radius:6px;background:hsl(var(--primary));transition:width .35s ease}.admin-actions{display:grid;gap:8px}.admin-actions .button{font-size:11px;padding:10px 12px;white-space:nowrap}.participants-admin-title{display:flex;justify-content:space-between;gap:12px;font-size:11px}.participants-admin-title span{color:hsl(var(--muted-foreground))}.admin-members{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}.admin-member-chip{display:flex;align-items:center;gap:7px;padding:5px 8px 5px 5px;border:1px solid hsl(var(--border));border-radius:999px;background:hsl(var(--background));font-size:10px}.admin-member-chip .member-avatar{width:24px;height:24px;border-radius:50%;font-size:10px}.wish-check{font-size:9px;color:hsl(var(--muted-foreground));padding-left:4px}.wish-check.has-wish{color:hsl(var(--primary));display:grid;place-items:center}.admin-room .error-box{font-size:11px}@media(max-width:760px){.admin-metrics{grid-template-columns:1fr 1fr;gap:15px}.admin-actions{grid-column:1/-1}.admin-actions .button{width:100%}.admin-room{padding:17px}.admin-room-top{align-items:flex-start}.admin-room-top>.status-pill{font-size:9px}}`}</style>
   </article>;
 }
 
