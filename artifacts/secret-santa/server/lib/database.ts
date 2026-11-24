@@ -123,18 +123,8 @@ export async function initializeDatabase(): Promise<void> {
   const adminResult = await query("SELECT id FROM users WHERE is_admin = TRUE LIMIT 1");
   if (adminResult.rowCount) return;
 
-  const adminUsername =
-    process.env.ADMIN_USERNAME ??
-    (process.env.NODE_ENV === "production" ? undefined : "admin");
-  const adminPassword =
-    process.env.ADMIN_PASSWORD ??
-    (process.env.NODE_ENV === "production" ? undefined : "admin");
-
-  if (!adminUsername || !adminPassword) {
-    throw new Error(
-      "ADMIN_USERNAME and ADMIN_PASSWORD are required to create the initial admin account.",
-    );
-  }
+  const adminUsername = process.env.ADMIN_USERNAME || "admin";
+  const adminPassword = process.env.ADMIN_PASSWORD || "admin";
 
   await query(
     "INSERT INTO users (username, password_hash, is_admin, created_at) VALUES ($1, $2, TRUE, $3)",

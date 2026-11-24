@@ -12,7 +12,7 @@ Set these environment variables in Render:
 
 - `NODE_ENV` = `production`
 - `DATABASE_URL` = the PostgreSQL connection URL from your Render database. Prefer its **internal database URL** when the web service is in the same Render region; use the **external database URL** otherwise. Keep this value in Render's environment settings, not in source control.
-- `ADMIN_USERNAME` and `ADMIN_PASSWORD` = credentials for the initial administrator. These are used only when the database has no administrator yet; use a new, empty database when changing the initial credentials.
+- `ADMIN_USERNAME` and `ADMIN_PASSWORD` = optional credentials for the initial administrator. When omitted, the application uses `admin` / `admin`. These variables are used only when the database has no administrator yet; use a new, empty database when changing the initial credentials.
 
 The application creates its PostgreSQL tables on startup. Render supplies `PORT` automatically; do not set it yourself.
 
