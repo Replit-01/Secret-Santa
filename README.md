@@ -11,9 +11,9 @@ Create a **Web Service** from this repository and leave **Root Directory** empty
 Set these environment variables in Render:
 
 - `NODE_ENV` = `production`
+- `DATABASE_URL` = the PostgreSQL connection URL from your Render database. Prefer its **internal database URL** when the web service is in the same Render region; use the **external database URL** otherwise. Keep this value in Render's environment settings, not in source control.
 - `ADMIN_USERNAME` and `ADMIN_PASSWORD` = credentials for the initial administrator. These are used only when the database has no administrator yet; use a new, empty database when changing the initial credentials.
-- `SQLITE_PATH` = `/var/data/secret-santa.sqlite`
 
-Attach a persistent disk mounted at `/var/data` to keep accounts and exchanges across deploys; Render persistent disks require a paid service plan. SQLite data on Render's temporary filesystem is lost when the service is replaced. Render supplies `PORT` automatically; do not set it yourself.
+The application creates its PostgreSQL tables on startup. Render supplies `PORT` automatically; do not set it yourself.
 
-The local development default administrator remains `admin` / `admin`; production requires the two administrator variables when creating the first admin account.
+Set `DATABASE_URL` for local development too. The local development default administrator remains `admin` / `admin`; production requires the two administrator variables when creating the first admin account.

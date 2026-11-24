@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import type { Request, RequestHandler, Response } from "express";
-import { db } from "./database.js";
+import { query } from "./database.js";
 
 export interface AuthenticatedUser {
   id: number;
@@ -59,48 +59,52 @@ function clearSessionCookie(res: Response): void {
   });
 }
 
-export function createSession(userId: number, res: Response): void {
+export async function createSession(userId: number, res: Response): Promise<void> {
   const token = randomBytes(32).toString("base64url");
   const expiresAt = Date.now() + SESSION_DURATION_MS;
-  db.prepare(
-    "INSERT INTO sessions (token_hash, user_id, expires_at, created_at) VALUES (?, ?, ?, ?)",
-  ).run(hashSessionToken(token), userId, expiresAt, new Date().toISOString());
+  await query(
+    "INSERT INTO sessions (token_hash, user_id, expires_at, created_at) VALUES ($1, $2, $3, $4)",
+    [hashSessionToken(token), userId, expiresAt, new Date().toISOString()],
+  );
   res.cookie(COOKIE_NAME, token, cookieOptions());
 }
 
-export function removeSession(req: Request, res: Response): void {
+export async function removeSession(req: Request, res: Response): Promise<void> {
   const token = readSessionToken(req);
   if (token) {
-    db.prepare("DELETE FROM sessions WHERE token_hash = ?").run(hashSessionToken(token));
+    await query("DELETE FROM sessions WHERE token_hash = $1", [hashSessionToken(token)]);
   }
   clearSessionCookie(res);
 }
 
-function findSessionUser(token: string): AuthenticatedUser | undefined {
+async function findSessionUser(token: string): Promise<AuthenticatedUser | undefined> {
   const tokenHash = hashSessionToken(token);
-  const row = db
-    .prepare(
-      `SELECT u.id, u.username, u.is_admin AS isAdmin, s.expires_at AS expiresAt
+  const result = await query<{
+    id: number;
+    username: string;
+    isAdmin: boolean;
+    expiresAt: string;
+  }>(
+      `SELECT u.id, u.username, u.is_admin AS "isAdmin", s.expires_at AS "expiresAt"
        FROM sessions s
        JOIN users u ON u.id = s.user_id
-       WHERE s.token_hash = ?`,
-    )
-    .get(tokenHash) as
-    | { id: number; username: string; isAdmin: number; expiresAt: number }
-    | undefined;
+       WHERE s.token_hash = $1`,
+      [tokenHash],
+    );
+  const row = result.rows[0];
 
   if (!row) return undefined;
-  if (row.expiresAt <= Date.now()) {
-    db.prepare("DELETE FROM sessions WHERE token_hash = ?").run(tokenHash);
+  if (Number(row.expiresAt) <= Date.now()) {
+    await query("DELETE FROM sessions WHERE token_hash = $1", [tokenHash]);
     return undefined;
   }
 
-  return { id: row.id, username: row.username, isAdmin: row.isAdmin === 1 };
+  return { id: row.id, username: row.username, isAdmin: row.isAdmin };
 }
 
-export const requireAuth: RequestHandler = (req, res, next) => {
+export const requireAuth: RequestHandler = async (req, res, next) => {
   const token = readSessionToken(req);
-  const user = token ? findSessionUser(token) : undefined;
+  const user = token ? await findSessionUser(token) : undefined;
   if (!user) {
     clearSessionCookie(res);
     res.status(401).json({ error: "Zaloguj się, aby kontynuować." });

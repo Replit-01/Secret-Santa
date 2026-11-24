@@ -29,21 +29,21 @@ import {
 const router = Router();
 router.use("/admin", requireAuth, requireAdmin);
 
-router.get("/admin/rooms", (_req, res) => {
-  res.json(ListAdminRoomsResponse.parse({ rooms: listAdminRooms() }));
+router.get("/admin/rooms", async (_req, res) => {
+  res.json(ListAdminRoomsResponse.parse({ rooms: await listAdminRooms() }));
 });
 
-router.post("/admin/rooms", (req, res) => {
+router.post("/admin/rooms", async (req, res) => {
   const parsed = CreateRoomBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Podaj nazwę pokoju (maksymalnie 80 znaków)." });
     return;
   }
-  const room = createRoom(parsed.data.name, authenticatedUser(req).id);
+  const room = await createRoom(parsed.data.name, authenticatedUser(req).id);
   res.status(201).json(CreateRoomResponse.parse(room));
 });
 
-router.delete("/admin/rooms/:roomCode", (req, res) => {
+router.delete("/admin/rooms/:roomCode", async (req, res) => {
   const parsed = DeleteRoomParams.safeParse({
     roomCode: String(req.params.roomCode ?? "").toUpperCase(),
   });
@@ -52,7 +52,7 @@ router.delete("/admin/rooms/:roomCode", (req, res) => {
     return;
   }
 
-  const result = deleteRoom(parsed.data.roomCode);
+  const result = await deleteRoom(parsed.data.roomCode);
   if (result.kind === "not-found") {
     res.status(404).json({ error: "Nie znaleziono pokoju." });
     return;
@@ -60,7 +60,7 @@ router.delete("/admin/rooms/:roomCode", (req, res) => {
   res.json(DeleteRoomResponse.parse({ ok: true }));
 });
 
-router.delete("/admin/rooms/:roomCode/members/:userId", (req, res) => {
+router.delete("/admin/rooms/:roomCode/members/:userId", async (req, res) => {
   const parsed = DeleteRoomMemberParams.safeParse({
     roomCode: String(req.params.roomCode ?? "").toUpperCase(),
     userId: req.params.userId,
@@ -70,7 +70,7 @@ router.delete("/admin/rooms/:roomCode/members/:userId", (req, res) => {
     return;
   }
 
-  const result = deleteRoomMember(parsed.data.roomCode, parsed.data.userId);
+  const result = await deleteRoomMember(parsed.data.roomCode, parsed.data.userId);
   if (result.kind === "not-found") {
     res.status(404).json({ error: "Nie znaleziono pokoju." });
     return;
@@ -86,7 +86,7 @@ router.delete("/admin/rooms/:roomCode/members/:userId", (req, res) => {
   res.json(DeleteRoomMemberResponse.parse({ ok: true }));
 });
 
-router.post("/rooms/:roomCode/draw", requireAuth, requireAdmin, (req, res) => {
+router.post("/rooms/:roomCode/draw", requireAuth, requireAdmin, async (req, res) => {
   const parsed = DrawRoomParams.safeParse({
     roomCode: String(req.params.roomCode ?? "").toUpperCase(),
   });
@@ -94,7 +94,7 @@ router.post("/rooms/:roomCode/draw", requireAuth, requireAdmin, (req, res) => {
     res.status(400).json({ error: "Nieprawidłowy kod pokoju." });
     return;
   }
-  const result = drawRoom(parsed.data.roomCode);
+  const result = await drawRoom(parsed.data.roomCode);
   if (result.kind === "not-found") {
     res.status(404).json({ error: "Nie znaleziono pokoju." });
     return;
@@ -110,7 +110,7 @@ router.post("/rooms/:roomCode/draw", requireAuth, requireAdmin, (req, res) => {
   res.json(DrawRoomResponse.parse(result.room));
 });
 
-router.post("/rooms/:roomCode/reset", requireAuth, requireAdmin, (req, res) => {
+router.post("/rooms/:roomCode/reset", requireAuth, requireAdmin, async (req, res) => {
   const parsed = ResetRoomDrawParams.safeParse({
     roomCode: String(req.params.roomCode ?? "").toUpperCase(),
   });
@@ -118,7 +118,7 @@ router.post("/rooms/:roomCode/reset", requireAuth, requireAdmin, (req, res) => {
     res.status(400).json({ error: "Nieprawidłowy kod pokoju." });
     return;
   }
-  const result = resetRoomDraw(parsed.data.roomCode);
+  const result = await resetRoomDraw(parsed.data.roomCode);
   if (result.kind === "not-found") {
     res.status(404).json({ error: "Nie znaleziono pokoju." });
     return;

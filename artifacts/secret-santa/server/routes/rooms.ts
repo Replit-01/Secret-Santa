@@ -25,13 +25,13 @@ function normalizedRoomCode(value: unknown): string {
   return String(value ?? "").toUpperCase();
 }
 
-router.get("/rooms/:roomCode", (req, res) => {
+router.get("/rooms/:roomCode", async (req, res) => {
   const parsed = GetRoomParams.safeParse({ roomCode: normalizedRoomCode(req.params.roomCode) });
   if (!parsed.success) {
     res.status(400).json({ error: "Nieprawidłowy kod pokoju." });
     return;
   }
-  const detail = getRoomDetail(parsed.data.roomCode, authenticatedUser(req).id);
+  const detail = await getRoomDetail(parsed.data.roomCode, authenticatedUser(req).id);
   if (!detail) {
     res.status(404).json({ error: "Nie znaleziono pokoju." });
     return;
@@ -39,13 +39,13 @@ router.get("/rooms/:roomCode", (req, res) => {
   res.json(GetRoomResponse.parse(detail));
 });
 
-router.post("/rooms/:roomCode/join", (req, res) => {
+router.post("/rooms/:roomCode/join", async (req, res) => {
   const parsed = JoinRoomParams.safeParse({ roomCode: normalizedRoomCode(req.params.roomCode) });
   if (!parsed.success) {
     res.status(400).json({ error: "Nieprawidłowy kod pokoju." });
     return;
   }
-  const result = joinRoom(parsed.data.roomCode, authenticatedUser(req).id);
+  const result = await joinRoom(parsed.data.roomCode, authenticatedUser(req).id);
   if (result.kind === "not-found") {
     res.status(404).json({ error: "Nie znaleziono pokoju." });
     return;
@@ -57,7 +57,7 @@ router.post("/rooms/:roomCode/join", (req, res) => {
   res.json(JoinRoomResponse.parse(result.detail));
 });
 
-router.put("/rooms/:roomCode/wishlist", (req, res) => {
+router.put("/rooms/:roomCode/wishlist", async (req, res) => {
   const params = UpdateWishlistParams.safeParse({
     roomCode: normalizedRoomCode(req.params.roomCode),
   });
@@ -67,7 +67,7 @@ router.put("/rooms/:roomCode/wishlist", (req, res) => {
     return;
   }
 
-  const result = updateWishlist(
+  const result = await updateWishlist(
     params.data.roomCode,
     authenticatedUser(req).id,
     body.data.text,
@@ -83,7 +83,7 @@ router.put("/rooms/:roomCode/wishlist", (req, res) => {
   res.json(UpdateWishlistResponse.parse(result.wishlist));
 });
 
-router.get("/rooms/:roomCode/assignment", (req, res) => {
+router.get("/rooms/:roomCode/assignment", async (req, res) => {
   const parsed = GetMyAssignmentParams.safeParse({
     roomCode: normalizedRoomCode(req.params.roomCode),
   });
@@ -91,7 +91,7 @@ router.get("/rooms/:roomCode/assignment", (req, res) => {
     res.status(400).json({ error: "Nieprawidłowy kod pokoju." });
     return;
   }
-  const result = getAssignment(parsed.data.roomCode, authenticatedUser(req).id);
+  const result = await getAssignment(parsed.data.roomCode, authenticatedUser(req).id);
   if (result.kind === "not-found") {
     res.status(404).json({ error: "Nie znaleziono pokoju." });
     return;
